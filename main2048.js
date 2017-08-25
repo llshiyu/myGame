@@ -1,6 +1,7 @@
 board = [];//游戏数据
 score = 0;//游戏分数
 const mapSize = 4;//
+needNewPoint = 0;
 
 $(document).ready(function () {
     newgame();
@@ -103,22 +104,21 @@ function generateOnePoint() {
     return parseInt(Math.random() * mapSize * mapSize);
 }
 
-let needNewPoint;
 //获取玩家按下键盘信息
 $(document).keydown(function (event) {
     switch (event.keyCode) {
         case 37://left
             //如果不能向左移动  moveleft返回值为false  能   true
-            move(0, -1);
+            moveLeft();
             break;
         case 38://up
-            move(-1, 0);
+            moveUp();
             break;
         case 39://right
-            move(0, 1);
+            moveRight();
             break;
         case 40://down
-            move(1, 0);
+            moveDown();
             break;
         default:
             break;
@@ -133,23 +133,90 @@ $(document).keydown(function (event) {
     }
     print();
 });
-needNewPoint = 0;
 
-function move(x, y) {
-    for (let z = 0; z < mapSize; z++) {
-        for (let i = 1; i <= mapSize; i++) {
-            for (let j = 1; j <= mapSize; j++) {
-                if (board[i][j] !== 0 && board[i + x][j + y] === 0) {
-                    board[i + x][j + y] = board[i][j];
-                    board[i][j] = 0;
-                    needNewPoint = 1;
-                    // showMoveAnimation(i, j, i + x, j + y);
-                }
-            }
+function moveLeft() {
+    move(mapSize + 1, mapSize + 1, 0, -1);
+}
+
+function moveRight() {
+    move(0, 0, 0, 1);
+}
+
+function moveUp() {
+    move(mapSize + 1, mapSize + 1, -1, 0);
+}
+
+function moveDown() {
+    move(0, 0, 1, 0);
+}
+
+function move(x, y, dx, dy) {
+    for (let i = x; i < x + mapSize; i++) {
+        for (let j = y; j < y + mapSize; j++) {
+            moveAndMorge(Math.abs(i - mapSize), Math.abs(j - mapSize), dx, dy);
         }
     }
-    merge(x, y);
 }
+
+/**
+ * 移动目标到最终位置，并且能合并就合并
+ * @param x 目前点的x坐标
+ * @param y 目前点的y坐标
+ * @param dx 去下一个点x要移动的位置
+ * @param dy 去下一个点y要移动的位置
+ */
+/**
+ *
+ * @param x
+ * @param y
+ * @param dx
+ * @param dy
+ */
+function moveAndMorge(x, y, dx, dy) {
+    if (board[x][y] === 0) {
+        return;
+    }
+    // 如果不能移动且合并，直接返回
+    if (board[x + dx][y + dy] !== 0 && board[x][y] !== board[x + dx][y + dy]) {
+        return;
+    }
+    console.log("x:", x, "y:", y, "dx:", dx, "dy:", dy);
+    //会发生有效行为，则需要生成新的点
+    needNewPoint = 1;
+
+    num = board[x][y];
+    //移动，直到不能移动
+    while (board[x + dx][y + dy] === 0) {
+        board[x][y] = 0;
+        x += dx;
+        y += dy;
+        board[x][y] = num;
+    }
+
+    //合并
+    if (board[x + dx][y + dy] === num) {
+        board[x][y] = 0;
+        x += dx;
+        y += dy;
+        board[x][y] += num;
+    }
+}
+
+// function move(x, y) {
+//     for (let z = 0; z < mapSize; z++) {
+//         for (let i = 1; i <= mapSize; i++) {
+//             for (let j = 1; j <= mapSize; j++) {
+//                 if (board[i][j] !== 0 && board[i + x][j + y] === 0) {
+//                     board[i + x][j + y] = board[i][j];
+//                     board[i][j] = 0;
+//                     needNewPoint = 1;
+//                     // showMoveAnimation(i, j, i + x, j + y);
+//                 }
+//             }
+//         }
+//     }
+//     merge(x, y);
+// }
 
 function merge(x, y) {
     let t = false;
